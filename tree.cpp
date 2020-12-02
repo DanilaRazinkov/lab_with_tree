@@ -10,10 +10,10 @@ Tree::Tree()
 
 void Tree::add(int x)
 {
-    add(x, head, NULL);
+    add(x, head);
 }
 
-void Tree::add(int x, node*& now, node* parent)
+void Tree::add(int x, node*& now)
 {
     if (now == NULL)
     {
@@ -22,33 +22,31 @@ void Tree::add(int x, node*& now, node* parent)
         now->count = 1;
         now->right = NULL;
         now->left = NULL;
-        now->parent = parent;
     }
     else
-        if (now->value > x)
-            add(x, now->right, now);
+        if (now->value < x)
+            add(x, now->right);
         else
-            if (now->value < x)
-                add(x, now->left, now);
+            if (now->value > x)
+                add(x, now->left);
             else
                 now->count++;
 }
 
-
-Tree::node* Tree::found(int x)
+node* Tree::find(int x)
 {
-    return found(x, head);
+    return find(x, head);
 }
 
-Tree::node* Tree::found(int x, node* now)
+node* Tree::find(int x, node* now)
 {
     if (now == NULL) return NULL;
     else
         if (now->value == x) return now;
         else
-            if (x < now->value) return found(x, now->left);
+            if (x < now->value) return find(x, now->left);
             else
-                if (x > now->value) return found(x, now->right);
+                if (x > now->value) return find(x, now->right);
 }
 
 void Tree::clean_tree()
@@ -111,37 +109,118 @@ void Tree::show_sim(node* now)
     }
 }
 
-void Tree::delete_el(node* now)
+void Tree::delete_el(int value)
 {
-    if (now->right != NULL && now->left != NULL)
+    delete_el(head, value);
+}
+
+void Tree::delete_el(node*& now, int value)
+{
+    if (now != NULL)
     {
-        node* the_right = right(now->left);
-        now->value = the_right->value;
-        now->count = the_right->count;
-        if (the_right->left != NULL)
+        if (now->value == value)
         {
-            node* t = the_right;
-            the_right = the_right->left;
-            delete t;
+            now->count--;
+            if (now->count == 0)
+                if (now->left == NULL)
+                {
+                    node* t = now;
+                    now = now->right;
+                    delete t;
+                }
+                else
+                    if (now->right == NULL)
+                    {
+                        node* t = now;
+                        now = now->left;
+                        delete t;
+                    }
+                    else
+                    {
+                        node* the_right = now->left;
+                        node* prev = the_right;
+                        while (the_right->right != NULL)
+                        {
+                            prev = the_right;
+                            the_right = the_right->right;
+                        }
+                        now->value = the_right->value;
+                        now->count = the_right->count;
+                        if (the_right == now->left)
+                            now->left = the_right->left;
+                        else
+                            prev->right = the_right->left;
+                        delete the_right;
+                    }
         }
         else
-        {
-            node* t = the_right;
-            the_right = NULL;
-            delete t;
-        }
-
+            if (now->value < value)
+                delete_el(now->right, value);
+            else
+                if (now->value > value)
+                    delete_el(now->left, value);
     }
 }
 
-Tree::node* Tree::right(node* now)
+void Tree::show()
+{
+    show(head, 0);
+}
+
+void Tree::show(node* now, int l)
 {
     if (now != NULL)
-        if (now->right != NULL)
-            return right(now->right);
-        else
-            return now;
+    {
+        show(now->right, l + 1);
+        for (int i = 0; i < l; i++)
+            cout << "     ";
+        cout << now->value << '(' << now->count << ')' << endl;
+        show(now->left, l + 1);
+    }
 }
+
+void Tree::increase_leafs()
+{
+    increase_leafs(head);
+}
+
+void Tree::increase_leafs(node* now)
+{
+    if (now != NULL)
+    {
+        increase_leafs(now->left);
+        if (now->right == NULL && now->left == NULL)
+            cout << now->value << '(' << now->count << "), ";
+        else
+            increase_leafs(now->right);
+    }
+}
+
+node* Tree::find_max_count()
+{
+    return find_max_count(head);
+}
+
+node* Tree::find_max_count(node* now)
+{
+    if (now == NULL)
+        return NULL;
+    else
+    {
+        node* result = now;
+        node* max_left = find_max_count(now->left);
+        node* max_right = find_max_count(now->right);
+
+        if (max_left != NULL && max_left->count > result->count)
+            result = max_left;
+        if (max_right != NULL && max_right->count > result->count)
+            result = max_right;
+
+        return result;
+    }
+}
+
+
 
 string Tree::tostring()
 {
